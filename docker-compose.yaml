@@ -48,8 +48,6 @@ services:
       SCHEMA_REGISTRY_LISTENERS: 'http://schema-registry:8081'
       SCHEMA_REGISTRY_ACCESS_CONTROL_ALLOW_METHODS: GET,POST,PUT,DELETE,OPTIONS,HEAD
       SCHEMA_REGISTRY_ACCESS_CONTROL_ALLOW_ORIGIN: '*'
-      ACCESS_CONTROL_ALLOW_METHODS: GET,POST,PUT,DELETE,OPTIONS,HEAD
-      ACCESS_CONTROL_ALLOW_ORIGIN: '*'
 
   schema-registry-ui:
     image: landoop/schema-registry-ui:0.9.5
@@ -101,6 +99,39 @@ services:
       CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
       CONNECT_PLUGIN_PATH: /usr/share/java
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
+
+  kafka-topics-ui:
+    image: landoop/kafka-topics-ui:0.9.4
+    hostname: kafka-topics-ui
+    container_name: kafka-topics-ui
+    depends_on:
+      - zookeeper
+      - broker
+      - rest-proxy
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      KAFKA_REST_PROXY_URL: 'http://rest-proxy:8082'
+      PROXY: 'true'
+
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:5.0.0
+    depends_on:
+      - zookeeper
+      - broker
+      - schema-registry
+    ports:
+      - "8082:8082"
+    hostname: rest-proxy
+    container_name: rest-proxy
+    environment:
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:9092'
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
+      KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      KAFKA_REST_ACCESS_CONTROL_ALLOW_METHODS: GET,POST,PUT,DELETE,OPTIONS,HEAD
+      KAFKA_REST_ACCESS_CONTROL_ALLOW_ORIGIN: '*'
 
 volumes:
     mi2: {}
